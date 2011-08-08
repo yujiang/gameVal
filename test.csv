@@ -1,0 +1,17 @@
+level	级别	0
+kind	种族	0
+strength_ori	天生力量	0
+strength_grow	成长力量	if (val_kind == 2) then return val_level*1.5 else return val_level*2 end
+strength_addpoint	加点的力量	0
+strength_EKB	装备skillbuffer加的力量	0
+strength_all	力量总和	return val_strength_ori + val_strength_grow + val_strength_addpoint + val_strength_EKB
+life_ori	天生生命	return val_level*15
+life_EKB	装备skillbuffer加的生命	0
+life_maxRaw	最大生命数值	return val_life_ori + val_life_EKB + val_strength_all * 10
+life_percentEKB	装备skillbuffer加的生命百分比	0
+life_max	最大生命	return val_life_maxRaw * (1+val_life_percentEKB) + val_level*100
+attack_ori	天生攻击力	0
+attack_EKB	装备skillbuffer加的攻击	0
+attack_raw	攻击力数值	return val_attack_ori + val_attack_EKB + val_strength_all * 2
+attack_percentEKB	装备skillbuffer加的攻击百分比	0
+attack	攻击力	return val_attack_raw * (1+val_attack_percentEKB)
