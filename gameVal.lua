@@ -1,4 +1,7 @@
---[[本文件用于游戏的数值计算，直接应用于excel生成的文件;用c++写烦死，用lua200行--]]
+--[[this file use to automation generate gameValue designed by a csv file(Excel export)
+I had wirtten this before，but lua only 200 lines, and just one day work
+--]]
+
 g_csv = {}
 g_csv_name = {}
 
@@ -30,8 +33,8 @@ function csv_set_father(index,father)
 end
 
 function bind_func(index,t,file)
-	--[[查找单词if (kind == 2) then return level*1.5 else return level*2 end
-	-->	function (t) if (t.val[2] == 2) then return t.val[1]*1.5 else return t.val[1]*2 end  end--]]
+	--[[if (kind == 2) then return level*1.5 else return level*2 end
+	-->	function (val) if (val[2] == 2) then return val[1]*1.5 else return val[1]*2 end  end--]]
 	if (#t.funcname > 1) then  --not '0'
 		local s = t.funcname
 		for token in string.gmatch(s,"val_([%w_]+)") do
@@ -49,7 +52,7 @@ function bind_func(index,t,file)
 		end
 
 		s = t.name.." = function (val) " .. s .. " end,\n"
-		--使用loadstring如果出错，找不到原因，所以写入一个file
+		--loadstring not good than require -- for error info
 		file:write(s)
 	end
 end
@@ -78,12 +81,12 @@ function csv_is_child(f,c)
 	return false
 end
 
-function csv_is_child_resc(f,c)  --递归
+function csv_is_child_recursive(f,c)
 	if (csv_is_child(f,c)) then
 		return true
 	end
 	for _,k in ipairs(g_csv[c].fathers) do
-		if (csv_is_child_resc(f,k)) then
+		if (csv_is_child_recursive(f,k)) then
 			return true;
 		end
 	end
@@ -114,12 +117,12 @@ function csv_read(csv)
 		end
 	end
 
-	--优化，消灭多余的依赖关系，比如a-->b,c b-->c 那么可以简化为a-->b b-->c这样可以少一次函数调用
+	--remove redundancy relationship，a-->b,c b-->c simplfy to: a-->b b-->c so less function call
 	for f,t in ipairs(g_csv) do
 		rm = {}
 		for i,j in ipairs(t.childs) do --for all child if any (chlld->father) also is child then remove this child
 			for _,k in ipairs(g_csv[j].fathers) do
-				if csv_is_child_resc(f,k) then
+				if csv_is_child_recursive(f,k) then
 					rm[i] = j
 					break
 				end
@@ -153,19 +156,17 @@ function update_value(person,index)
 end
 
 function csv_change_value(person,index,value)
-	if (type(index) == "string") then
-		index = g_csv_name[index]
-		if (index == nil) then
-			print("error can not find name " .. index)
-			return
-		end
-	end
 	assert(g_csv[index].func == nil)
 	person.val[index] = value
 	for _,j in ipairs(g_csv[index].childs) do
 		update_value(person,j)
 	end
 end
+
+function csv_change_value_byname(person,name,value)
+	return csv_change_value(person,g_csv_name[name],value)
+end
+
 
 function csv_print_val(person)
 	print("csv_print_val(person)")
@@ -197,7 +198,7 @@ function test()
 	csv_print_val(p)
 	csv_change_value(p,1,10)
 	csv_print_val(p)
-	csv_change_value(p,"level",8)
+	csv_change_value_byname(p,"level",8)
 	csv_print_val(p)
 end
---test()
+test()
